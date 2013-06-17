@@ -12,6 +12,16 @@ namespace NServiceBus.Testing
     /// </summary>
     public static class Test
     {
+        private static bool _initialized = false;
+
+        private static void EnsureTestingIsInitialized()
+        {
+            if (!_initialized)
+            {
+                Initialize();   
+            }
+        }
+
         /// <summary>
         /// Get the reference to the bus used for testing.
         /// </summary>
@@ -62,6 +72,8 @@ namespace NServiceBus.Testing
             
             messageCreator = mapper;
             ExtensionMethods.MessageCreator = messageCreator;
+
+            _initialized = true;
         }
 
         /// <summary>
@@ -81,6 +93,8 @@ namespace NServiceBus.Testing
         /// <returns></returns>
         public static Saga<T> Saga<T>(Guid sagaId) where T : ISaga, new()
         {
+            EnsureTestingIsInitialized();
+
             var saga = (T)Activator.CreateInstance(typeof(T));
 
             var prop = typeof(T).GetProperty("Data");
@@ -102,6 +116,8 @@ namespace NServiceBus.Testing
         /// <returns></returns>
         public static Saga<T> Saga<T>(T saga) where T : ISaga, new()
         {
+            EnsureTestingIsInitialized();
+
             bus = new StubBus(messageCreator);
             ExtensionMethods.Bus = bus;
 
@@ -117,6 +133,8 @@ namespace NServiceBus.Testing
         /// <returns></returns>
         public static Handler<T> Handler<T>() where T : new()
         {
+            EnsureTestingIsInitialized();
+
             var handler = (T)Activator.CreateInstance(typeof(T));
 
             return Handler(handler);
@@ -130,6 +148,8 @@ namespace NServiceBus.Testing
         /// <returns></returns>
         public static Handler<T> Handler<T>(T handler)
         {
+            EnsureTestingIsInitialized();
+
             Func<IBus, T> handlerCreator = b => handler;
             var prop = typeof(T).GetProperties().Where(p => p.PropertyType == typeof(IBus)).FirstOrDefault();
             if (prop != null)
@@ -152,6 +172,8 @@ namespace NServiceBus.Testing
         /// <returns></returns>
         public static Handler<T> Handler<T>(Func<IBus, T> handlerCreationCallback)
         {
+            EnsureTestingIsInitialized();
+
             bus = new StubBus(messageCreator);
             ExtensionMethods.Bus = bus;
 
